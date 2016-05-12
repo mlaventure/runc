@@ -57,6 +57,22 @@ command(s) that get executed on start, edit the args parameter of the spec. See
 			Name:  "no-pivot",
 			Usage: "do not use pivot root to jail process inside rootfs.  This should be used whenever the rootfs is on top of a ramdisk",
 		},
+		cli.StringFlag{
+			Name:  "prestart-hook",
+			Usage: "append a new prestart hook to the one defined in the bundle",
+		},
+		cli.StringSliceFlag{
+			Name:  "prestart-hook-args",
+			Usage: "arguments to be passed down to the extra prestart hook",
+		},
+		cli.StringSliceFlag{
+			Name:  "prestart-hook-envs",
+			Usage: "environment variables to be set for the extra prestart hook",
+		},
+		cli.DurationFlag{
+			Name:  "prestart-hook-timeout",
+			Usage: "maximum time for which to wait for the extra prestart hook to exit",
+		},
 	},
 	Action: func(context *cli.Context) {
 		bundle := context.String("bundle")
@@ -77,6 +93,21 @@ command(s) that get executed on start, edit the args parameter of the spec. See
 
 		if os.Geteuid() != 0 {
 			fatalf("runc should be run as root")
+		}
+
+		if path := context.String("prestart-hook"); path != "" {
+			h := specs.Hook{
+				Path: path,
+				Args: append([]string{path}, context.StringSlice("prestart-hook-args")...),
+				Env:  context.StringSlice("prestart-hook-envs"),
+			}
+
+			if t := context.Duration("prestart-hook-timeout"); t != 0 {
+				timeout := int(t)
+				h.Timeout = &timeout
+			}
+
+			spec.Hooks.Prestart = append(spec.Hooks.Prestart, h)
 		}
 
 		status, err := startContainer(context, spec)

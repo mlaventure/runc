@@ -298,10 +298,11 @@ loop:
 			if !p.config.Config.Namespaces.Contains(configs.NEWNS) {
 				if p.config.Config.Hooks != nil {
 					s := configs.HookState{
-						Version: p.container.config.Version,
-						ID:      p.container.id,
-						Pid:     p.pid(),
-						Root:    p.config.Config.Rootfs,
+						Version:     p.container.config.Version,
+						ID:          p.container.id,
+						Pid:         p.pid(),
+						Root:        p.config.Config.Rootfs,
+						CgroupPaths: p.manager.GetPaths(),
 					}
 					for i, hook := range p.config.Config.Hooks.Prestart {
 						if err := hook.Run(s); err != nil {
@@ -318,11 +319,12 @@ loop:
 		case procHooks:
 			if p.config.Config.Hooks != nil {
 				s := configs.HookState{
-					Version:    p.container.config.Version,
-					ID:         p.container.id,
-					Pid:        p.pid(),
-					Root:       p.config.Config.Rootfs,
-					BundlePath: utils.SearchLabels(p.config.Config.Labels, "bundle"),
+					Version:     p.container.config.Version,
+					ID:          p.container.id,
+					Pid:         p.pid(),
+					Root:        p.config.Config.Rootfs,
+					BundlePath:  utils.SearchLabels(p.config.Config.Labels, "bundle"),
+					CgroupPaths: p.manager.GetPaths(),
 				}
 				for i, hook := range p.config.Config.Hooks.Prestart {
 					if err := hook.Run(s); err != nil {
